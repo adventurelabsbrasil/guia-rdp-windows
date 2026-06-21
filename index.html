@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Remover o aviso de segurança do RDP no Windows</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6; margin: 0; padding: 0;
+    background: #f6f8fa; color: #1f2328;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 1.7rem; line-height: 1.25; margin: 0 0 6px; }
+  h2 { font-size: 1.25rem; margin: 38px 0 10px; padding-top: 14px; border-top: 1px solid #d0d7de; }
+  h3 { font-size: 1.02rem; margin: 22px 0 6px; }
+  .sub { color: #656d76; margin: 0 0 8px; }
+  code { background: rgba(175,184,193,.25); padding: .15em .4em; border-radius: 5px; font-size: .9em; }
+  pre {
+    position: relative; background: #0d1117; color: #e6edf3;
+    padding: 14px 16px; border-radius: 10px; overflow-x: auto;
+    font-size: .86rem; line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; color: inherit; }
+  .copy {
+    position: absolute; top: 8px; right: 8px;
+    background: #21262d; color: #c9d1d9; border: 1px solid #30363d;
+    border-radius: 6px; padding: 3px 10px; font-size: .75rem; cursor: pointer;
+  }
+  .copy:hover { background: #30363d; }
+  .copy.ok { color: #3fb950; border-color: #238636; }
+  .note { background: #fff8c5; border: 1px solid #d4a72c55; border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
+  .warn { background: #ffebe9; border: 1px solid #ff818266; border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
+  .ok   { background: #dafbe1; border: 1px solid #4ac26b66; border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
+  ol, ul { padding-left: 22px; }
+  li { margin: 5px 0; }
+  .step { font-weight: 600; }
+  footer { margin-top: 50px; color: #888; font-size: .8rem; text-align: center; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0d1117; color: #e6edf3; }
+    h2 { border-color: #30363d; }
+    .note { background: #2d2a0e; border-color: #9e8a2e88; }
+    .warn { background: #3a1414; border-color: #f8818166; }
+    .ok   { background: #0f2916; border-color: #3fb95066; }
+    .sub, footer { color: #8b949e; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Como remover o aviso de segurança da Conexão de Área de Trabalho Remota (RDP) no Windows</h1>
+  <p class="sub">Guia rápido para parar o pop-up <em>"Cuidado: conexão remota desconhecida / Fornecedor desconhecido"</em> que aparece a cada conexão.</p>
+
+  <div class="note">
+    <strong>Antes de começar:</strong> esses passos são feitos <strong>na máquina Windows que você usa para CONECTAR</strong> (o cliente), não no computador remoto. Você precisa estar logado como <strong>Administrador</strong>.
+  </div>
+
+  <h2>Existem dois avisos diferentes — descubra o seu</h2>
+  <ul>
+    <li><span class="step">Caso A —</span> O aviso mostra <strong>"Fornecedor desconhecido"</strong> e uma lista de recursos (cartão, área de transferência, impressoras). → Você abre um <strong>arquivo <code>.rdp</code></strong> salvo. Use a <a href="#caso-a">Solução A</a>.</li>
+    <li><span class="step">Caso B —</span> O aviso fala que <strong>"a identidade do computador remoto não pode ser verificada"</strong> (certificado). → Você digita o <strong>IP/nome direto</strong> no programa. Use a <a href="#caso-b">Solução B</a>.</li>
+  </ul>
+  <p>Na dúvida, faça os dois — não há conflito.</p>
+
+  <h2 id="caso-a">Solução A — aviso "Fornecedor desconhecido" (arquivo .rdp)</h2>
+  <p>Isso libera o Windows a abrir arquivos <code>.rdp</code> sem assinatura, sem o aviso.</p>
+
+  <h3>Opção 1 — PowerShell (recomendado)</h3>
+  <ol>
+    <li>Menu Iniciar → digite <strong>PowerShell</strong>.</li>
+    <li>Clique com o botão direito → <strong>Executar como administrador</strong>.</li>
+    <li>Cole o bloco abaixo e aperte <strong>Enter</strong>:</li>
+  </ol>
+<pre><button class="copy">copiar</button><code>$p = "HKLM:\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services"
+New-Item -Path $p -Force | Out-Null
+Set-ItemProperty -Path $p -Name "AllowUnsignedFiles" -Type DWord -Value 1
+Set-ItemProperty -Path $p -Name "AllowSignedFiles"   -Type DWord -Value 1</code></pre>
+
+  <h3>Opção 2 — Prompt de Comando (CMD)</h3>
+  <ol>
+    <li>Menu Iniciar → digite <strong>cmd</strong> → <strong>Executar como administrador</strong>.</li>
+    <li>Cole as duas linhas abaixo e aperte <strong>Enter</strong>:</li>
+  </ol>
+<pre><button class="copy">copiar</button><code>reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v AllowUnsignedFiles /t REG_DWORD /d 1 /f
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v AllowSignedFiles   /t REG_DWORD /d 1 /f</code></pre>
+
+  <div class="ok">✅ <strong>Pronto.</strong> Não precisa reiniciar. Abra o <code>.rdp</code> de novo — o aviso não deve mais aparecer.</div>
+
+  <h3>Conferir se aplicou</h3>
+  <p>Rode (não precisa ser admin só para ler):</p>
+<pre><button class="copy">copiar</button><code>reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v AllowUnsignedFiles</code></pre>
+  <p>Tem que retornar <code>AllowUnsignedFiles &nbsp; REG_DWORD &nbsp; 0x1</code>.</p>
+
+  <h2 id="caso-b">Solução B — aviso de certificado (conectando por IP/nome)</h2>
+
+  <h3>Jeito fácil (1 clique)</h3>
+  <p>Quando o aviso de certificado aparecer, marque a caixinha <strong>"Não perguntar novamente para conexões com este computador"</strong> e clique em <strong>Sim/Conectar</strong>. Some para aquele computador.</p>
+
+  <h3>Jeito definitivo (todos os computadores)</h3>
+  <p>Desliga a verificação que gera o aviso de certificado. PowerShell <strong>como administrador</strong>:</p>
+<pre><button class="copy">copiar</button><code>$c = "HKCU:\Software\Microsoft\Terminal Server Client"
+New-Item -Path $c -Force | Out-Null
+Set-ItemProperty -Path $c -Name "AuthenticationLevelOverride" -Type DWord -Value 0</code></pre>
+  <p>Equivalente em CMD:</p>
+<pre><button class="copy">copiar</button><code>reg add "HKCU\Software\Microsoft\Terminal Server Client" /v AuthenticationLevelOverride /t REG_DWORD /d 0 /f</code></pre>
+
+  <div class="warn">
+    ⚠️ <strong>Sobre segurança:</strong> esses ajustes desligam um aviso que existe para proteger contra conexões falsas. Faça isso apenas quando você <strong>confia no computador remoto</strong> (ex.: sua própria máquina, em rede segura/VPN como Tailscale). Em rede pública ou máquina de terceiros, prefira o "jeito fácil" (caixinha por computador).
+  </div>
+
+  <h2>Como desfazer (voltar os avisos)</h2>
+<pre><button class="copy">copiar</button><code>reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v AllowUnsignedFiles /f
+reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v AllowSignedFiles /f
+reg delete "HKCU\Software\Microsoft\Terminal Server Client" /v AuthenticationLevelOverride /f</code></pre>
+
+  <h2>Ainda aparece algum aviso?</h2>
+  <ul>
+    <li>Confirme que abriu o PowerShell/CMD <strong>como administrador</strong> (sem isso, a escrita falha).</li>
+    <li>Veja exatamente <strong>qual</strong> aviso aparece e identifique se é Caso A ou Caso B acima.</li>
+    <li>Feche e abra o programa de Conexão Remota de novo após aplicar.</li>
+  </ul>
+
+  <footer>Guia técnico • RDP / mstsc no Windows • página estática, sem cookies</footer>
+</div>
+
+<script>
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var code = btn.parentElement.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(function(){
+        var t = btn.textContent; btn.textContent = 'copiado ✓'; btn.classList.add('ok');
+        setTimeout(function(){ btn.textContent = t; btn.classList.remove('ok'); }, 1500);
+      });
+    });
+  });
+</script>
+</body>
+</html>
