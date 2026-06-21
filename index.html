@@ -112,6 +112,29 @@ Set-ItemProperty -Path $c -Name "AuthenticationLevelOverride" -Type DWord -Value
     ⚠️ <strong>Sobre segurança:</strong> esses ajustes desligam um aviso que existe para proteger contra conexões falsas. Faça isso apenas quando você <strong>confia no computador remoto</strong> (ex.: sua própria máquina, em rede segura/VPN como Tailscale). Em rede pública ou máquina de terceiros, prefira o "jeito fácil" (caixinha por computador).
   </div>
 
+  <h2 id="certificar">⭐ Jeito recomendado — certificar de verdade (em vez de desligar o aviso)</h2>
+  <p>Para o aviso de <strong>certificado</strong> (Caso B), o melhor não é desligar a verificação, e sim fazer o seu computador <strong>confiar de verdade</strong> na máquina remota. O aviso some porque a identidade passou a ser legítima — <strong>mais seguro</strong>, não menos. São 3 passos.</p>
+
+  <div class="ok">✅ Recomendado quando você vai usar sempre a mesma máquina remota (ex.: seu host via Tailscale). Substitui o "jeito definitivo" do Caso B.</div>
+
+  <h3>Passo 1 — na máquina REMOTA: exportar o certificado</h3>
+  <p>PowerShell <strong>como administrador</strong> no computador remoto. Exporta só a parte pública (seguro de compartilhar):</p>
+<pre><button class="copy">copiar</button><code>$c = Get-ChildItem Cert:\LocalMachine\"Remote Desktop"
+Export-Certificate -Cert $c[0] -FilePath C:\rdp-host.cer</code></pre>
+
+  <h3>Passo 2 — copiar o arquivo para a máquina do cliente</h3>
+  <p>Leve o <code>C:\rdp-host.cer</code> até a máquina que conecta (Gustavo) — pen drive, Tailscale, e-mail, o que for. Ele não é segredo.</p>
+
+  <h3>Passo 3 — na máquina do CLIENTE: instalar como confiável</h3>
+  <p>PowerShell <strong>como administrador</strong> na máquina do Gustavo (ajuste o caminho se salvou em outra pasta):</p>
+<pre><button class="copy">copiar</button><code>Import-Certificate -FilePath C:\rdp-host.cer -CertStoreLocation Cert:\LocalMachine\Root</code></pre>
+
+  <div class="ok">✅ Pronto. Na próxima conexão o aviso de certificado não aparece mais — porque a máquina remota agora é <strong>confiável de verdade</strong>. Não precisa do <code>AuthenticationLevelOverride</code>.</div>
+
+  <div class="note">
+    <strong>Para desfazer este passo:</strong> remova o certificado importado na máquina do cliente — abra <code>certlm.msc</code> → <em>Autoridades de Certificação Raiz Confiáveis → Certificados</em> → localize o certificado do host e exclua.
+  </div>
+
   <h2>Como desfazer (voltar os avisos)</h2>
 <pre><button class="copy">copiar</button><code>reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v AllowUnsignedFiles /f
 reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services" /v AllowSignedFiles /f
